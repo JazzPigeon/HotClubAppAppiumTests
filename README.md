@@ -54,9 +54,9 @@ Defaults live in `wdio.conf.js` and can be overridden with env vars:
 
 | Variable      | Default       | Description                          |
 | ------------- | ------------- | ------------------------------------ |
-| `IOS_APP`     | `apps/MyApp.app` | Path to the `.app` / `.ipa` build |
-| `IOS_DEVICE`  | `iPhone 16`   | Simulator device name                |
-| `IOS_VERSION` | `26.5`        | iOS platform version                 |
+| `IOS_APP`     | `apps/HotClubApp.app` | Path to the `.app` / `.ipa` build |
+| `IOS_DEVICE`  | `iPhone 17 Pro` | Simulator device name              |
+| `IOS_VERSION` | `26.5`        | iOS platform version (app requires 26.0+) |
 
 Example:
 
@@ -73,12 +73,14 @@ your app's UI tree and copy reliable selectors (prefer accessibility ids).
 
 ```
 appium-ios-tests/
-├── apps/                  # your .app / .ipa builds (git-ignored)
+├── apps/                       # your .app / .ipa builds (git-ignored)
 ├── test/
+│   ├── pageobjects/
+│   │   └── records.page.ts     # selectors for the Records screen + tab bar
 │   └── specs/
-│       └── example.e2e.ts # starter test — replace selectors with your app's
-├── wdio.conf.ts           # WebdriverIO + Appium configuration
-├── tsconfig.json          # TypeScript configuration
+│       └── records.e2e.ts      # e2e tests for the HotClub app
+├── wdio.conf.ts                # WebdriverIO + Appium configuration
+├── tsconfig.json               # TypeScript configuration
 ├── package.json
 └── README.md
 ```
