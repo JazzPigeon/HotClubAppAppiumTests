@@ -50,7 +50,7 @@ npm run typecheck
 
 ## Configuration
 
-Defaults live in `wdio.conf.js` and can be overridden with env vars:
+Defaults live in `config/wdio.conf.ts` and can be overridden with env vars:
 
 | Variable      | Default       | Description                          |
 | ------------- | ------------- | ------------------------------------ |
@@ -74,12 +74,13 @@ your app's UI tree and copy reliable selectors (prefer accessibility ids).
 ```
 appium-ios-tests/
 ├── apps/                       # your .app / .ipa builds (git-ignored)
+├── config/
+│   └── wdio.conf.ts            # WebdriverIO + Appium configuration
 ├── test/
 │   ├── pageobjects/
 │   │   └── records.page.ts     # selectors for the Records screen + tab bar
 │   └── specs/
 │       └── records.e2e.ts      # e2e tests for the HotClub app
-├── wdio.conf.ts                # WebdriverIO + Appium configuration
 ├── tsconfig.json               # TypeScript configuration
 ├── package.json
 └── README.md

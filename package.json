@@ -5,11 +5,13 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "test": "wdio run ./wdio.conf.ts",
+    "test": "wdio run ./config/wdio.conf.ts",
     "typecheck": "tsc --noEmit",
     "appium": "appium",
     "appium:install-driver": "appium driver install xcuitest",
-    "appium:doctor": "appium driver doctor xcuitest"
+    "appium:doctor": "appium driver doctor xcuitest",
+    "wdioIos": "wdio run config/ios-wdio.conf.ts",
+    "wdioIosBstack": "wdio run config/ios-bstack-wdio.conf.ts"
   },
   "keywords": [
     "appium",

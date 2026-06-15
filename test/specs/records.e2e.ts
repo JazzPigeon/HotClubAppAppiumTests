@@ -35,7 +35,7 @@ describe('HotClub - Records', () => {
     await expect(RecordsScreen.navBar).toBeDisplayed();
   });
 
-  it.only('switches to the Settings tab and back to Records', async () => {
+  it('switches to the Settings tab and back to Records', async () => {
     await RecordsScreen.settingsTab.click();
     // Leaving Records hides its navigation bar.
     await RecordsScreen.navBar.waitForDisplayed({ reverse: true, timeout: 10000 });
