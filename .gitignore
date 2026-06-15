@@ -1,0 +1,13 @@
+node_modules/
+logs/
+*.log
+
+# iOS build artifacts (keep these out of git; they're large)
+apps/*.app
+apps/*.ipa
+apps/*.zip
+
+# WDIO / test output
+allure-results/
+.wdio-vscode-service/
+.DS_Store
