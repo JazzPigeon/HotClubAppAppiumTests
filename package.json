@@ -5,13 +5,13 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "test": "wdio run ./config/wdio.conf.ts",
+    "test": "wdio run ./config/ios-wdio.conf.ts",
     "typecheck": "tsc --noEmit",
     "appium": "appium",
     "appium:install-driver": "appium driver install xcuitest",
     "appium:doctor": "appium driver doctor xcuitest",
     "wdioIos": "wdio run config/ios-wdio.conf.ts",
-    "wdioIosBstack": "wdio run config/ios-bstack-wdio.conf.ts"
+    "wdioIosGHTestRun": "wdio run config/ios-gh-test-run-wdio.conf.ts"
   },
   "keywords": [
     "appium",
@@ -27,6 +27,7 @@
     "@wdio/appium-service": "^9.12.1",
     "@wdio/cli": "^9.12.1",
     "@wdio/globals": "^9.12.1",
+    "@wdio/junit-reporter": "^9.28.0",
     "@wdio/local-runner": "^9.12.1",
     "@wdio/mocha-framework": "^9.12.1",
     "@wdio/spec-reporter": "^9.12.1",

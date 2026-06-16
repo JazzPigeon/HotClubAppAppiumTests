@@ -1,0 +1,75 @@
+name: iOS E2E (real device)
+
+# Runs the Appium/WebdriverIO suite against a physical iOS device on pull
+# requests. Because the device is cabled to a specific Mac, this must run on a
+# SELF-HOSTED macOS runner installed on that machine (GitHub's cloud runners
+# can't see your hardware).
+on:
+  pull_request: # runs on opened / synchronize / reopened by default
+  workflow_dispatch: # allows manual runs from the Actions tab
+
+# Needed so the JUnit results can be published back as a PR check / annotations.
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+# If a PR is updated while a run is in progress, cancel the older one — only one
+# job can own the connected device at a time.
+concurrency:
+  group: ios-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios-e2e:
+    # Targets a self-hosted runner labeled "macOS". Add your own custom label
+    # here if you registered the runner with one (e.g. the machine's name).
+    runs-on: [self-hosted, macOS]
+
+    env:
+      # --- Non-sensitive: configure as repository "Variables" -------------
+      IOS_DEVICE: ${{ vars.IOS_DEVICE }}     # e.g. "Cindy's iPhone"
+      IOS_VERSION: ${{ vars.IOS_VERSION }}   # must match the device's iOS version
+      IOS_APP: ${{ vars.IOS_APP }}           # path to a device-signed .ipa/.app on the runner
+      # --- Sensitive: configure as repository "Secrets" ------------------
+      IOS_UDID: ${{ secrets.IOS_UDID }}      # or leave unset to use "auto"
+      XCODE_ORG_ID: ${{ secrets.XCODE_ORG_ID }}        # Apple Developer Team id
+      XCODE_SIGNING_ID: ${{ secrets.XCODE_SIGNING_ID }} # optional; defaults to "Apple Development"
+      WDA_BUNDLE_ID: ${{ secrets.WDA_BUNDLE_ID }}       # optional; for personal provisioning
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Ensure XCUITest driver is installed
+        run: npx appium driver install xcuitest || echo "xcuitest driver already installed"
+
+      - name: Run iOS E2E tests
+        run: npm run wdioIosGHTestRun
+
+      - name: Publish JUnit test report
+        if: always()
+        uses: mikepenz/action-junit-report@v5
+        with:
+          report_paths: results/*.xml
+          check_name: iOS E2E Results
+
+      - name: Upload Appium & test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: appium-logs
+          path: |
+            logs/
+            results/
+          if-no-files-found: ignore
+          retention-days: 7
