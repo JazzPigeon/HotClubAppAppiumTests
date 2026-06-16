@@ -2,9 +2,6 @@ node_modules/
 logs/
 *.log
 
-# Self-hosted GitHub Actions runner (contains credentials/binaries)
-actions-runner/
-
 # iOS build artifacts (keep these out of git; they're large)
 apps/*.app
 apps/*.ipa

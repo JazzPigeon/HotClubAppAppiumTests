@@ -24,6 +24,19 @@ const ROOT = path.join(__dirname, '..');
 const APP_PATH =
   process.env.IOS_APP || path.join(ROOT, 'apps', 'HotClubApp-device.app');
 
+// On a free/personal team, Appium can't generate a WebDriverAgent provisioning
+// profile itself (it doesn't pass -allowProvisioningUpdates). So WDA is built &
+// signed once in Xcode, and Appium is pointed at that prebuilt output instead
+// of rebuilding it. Override these to match your own Xcode WDA build.
+const WDA_BUNDLE_ID =
+  process.env.WDA_BUNDLE_ID || 'com.cindymichalowski.WebDriverAgentRunner-';
+const WDA_DERIVED_DATA_PATH =
+  process.env.WDA_DERIVED_DATA_PATH ||
+  path.join(
+    process.env.HOME || '',
+    'Library/Developer/Xcode/DerivedData/WebDriverAgent-ejeswgciqlszoieyzjfjvuihnsbp'
+  );
+
 export const config: WebdriverIO.Config = {
   runner: 'local',
   tsConfigPath: path.join(ROOT, 'tsconfig.json'),
@@ -49,15 +62,20 @@ export const config: WebdriverIO.Config = {
       // Apple Developer Team id, e.g. "ABCDE12345".
       'appium:xcodeOrgId': process.env.XCODE_ORG_ID,
       'appium:xcodeSigningId': process.env.XCODE_SIGNING_ID || 'Apple Development',
-      // Helps with free/personal provisioning profiles; optional otherwise.
-      ...(process.env.WDA_BUNDLE_ID
-        ? { 'appium:updatedWDABundleId': process.env.WDA_BUNDLE_ID }
-        : {}),
+
+      // ---- Prebuilt WebDriverAgent (free/personal team) -----------------
+      // Reuse the WDA that was built & signed in Xcode instead of letting
+      // Appium rebuild it (which can't provision on a free team).
+      'appium:updatedWDABundleId': WDA_BUNDLE_ID,
+      'appium:derivedDataPath': WDA_DERIVED_DATA_PATH,
+      'appium:usePrebuiltWDA': true,
 
       'appium:noReset': false,
       'appium:newCommandTimeout': 240,
-      // First run compiles + signs WebDriverAgent via xcodebuild, which can
-      // take several minutes on a device. These are intentionally generous.
+      // Surface the raw xcodebuild output in the Appium log so WebDriverAgent
+      // build/signing failures (e.g. code 65) show the underlying error.
+      'appium:showXcodeLog': true,
+      // WDA install/launch on a device can still take a while; keep generous.
       'appium:wdaLaunchTimeout': 300000,
       'appium:wdaConnectionTimeout': 300000,
     },
