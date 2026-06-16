@@ -9,6 +9,7 @@ apps/*.zip
 
 # WDIO / test output
 results/
+results/screenshots/
 .wdio-vscode-service/
 .DS_Store
 

@@ -106,6 +106,16 @@ export const config: WebdriverIO.Config = {
   connectionRetryTimeout: 360000,
   connectionRetryCount: 1,
 
+  // ---- Hooks ------------------------------------------------------------
+  afterTest: async function (test, _context, { error }) {
+    if (error) {
+      const name = test.title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+      await browser.saveScreenshot(
+        path.join(ROOT, 'results', 'screenshots', `${name}_${Date.now()}.png`)
+      );
+    }
+  },
+
   framework: 'mocha',
   reporters: [
     'spec',
