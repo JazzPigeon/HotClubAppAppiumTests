@@ -122,7 +122,7 @@ export const config: WebdriverIO.Config = {
   framework: 'mocha',
   reporters: [
     'spec',
-    // JUnit XML for CI: GitHub Actions publishes these as a PR test report.
+    // JUnit XML for CI: GitHub Actions publishes these as a PR check.
     [
       'junit',
       {
@@ -130,6 +130,16 @@ export const config: WebdriverIO.Config = {
         outputFileFormat(options: { cid: string }) {
           return `results-${options.cid}.xml`;
         },
+      },
+    ],
+    // Allure: raw results written here; the workflow generates the HTML report
+    // and publishes it to GitHub Pages after the tests finish.
+    [
+      'allure',
+      {
+        outputDir: path.join(ROOT, 'allure-results'),
+        disableWebdriverStepsReporting: false,
+        disableWebdriverScreenshotsReporting: false,
       },
     ],
   ],

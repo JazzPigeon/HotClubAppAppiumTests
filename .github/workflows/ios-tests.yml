@@ -8,11 +8,13 @@ on:
   pull_request: # runs on opened / synchronize / reopened by default
   workflow_dispatch: # allows manual runs from the Actions tab
 
-# Needed so the JUnit results can be published back as a PR check / annotations.
+# Permissions needed for JUnit PR checks and GitHub Pages deployment.
 permissions:
   contents: read
   checks: write
   pull-requests: write
+  pages: write
+  id-token: write
 
 # If a PR is updated while a run is in progress, cancel the older one — only one
 # job can own the connected device at a time.
@@ -98,6 +100,29 @@ jobs:
             echo "| $(basename $f) |" >> $GITHUB_STEP_SUMMARY
           done
 
+      - name: Generate Allure report
+        if: always()
+        run: |
+          npx allure generate allure-results --clean -o allure-report
+
+      - name: Upload Allure report to GitHub Pages
+        if: always()
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: allure-report
+
+      - name: Deploy to GitHub Pages
+        if: always()
+        id: deploy-pages
+        uses: actions/deploy-pages@v4
+
+      - name: Add Allure report link to summary
+        if: always()
+        run: |
+          echo "## 📊 Allure Test Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [View full report](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/)" >> $GITHUB_STEP_SUMMARY
+
       - name: Upload Appium & test logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -106,5 +131,6 @@ jobs:
           path: |
             logs/
             results/
+            allure-results/
           if-no-files-found: ignore
           retention-days: 7
