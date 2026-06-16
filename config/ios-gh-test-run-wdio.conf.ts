@@ -19,9 +19,10 @@ const ROOT = path.join(__dirname, '..');
  * .github/workflows/ios-tests.yml.
  */
 
-// Device-signed app build. Point IOS_APP at a .ipa or device .app.
+// Device-signed app build (a `Debug-iphoneos` .app or a .ipa) — NOT the
+// Simulator build used by ios-wdio.conf.ts. Override with IOS_APP.
 const APP_PATH =
-  process.env.IOS_APP || path.join(ROOT, 'apps', 'HotClubApp.ipa');
+  process.env.IOS_APP || path.join(ROOT, 'apps', 'HotClubApp-device.app');
 
 export const config: WebdriverIO.Config = {
   runner: 'local',
