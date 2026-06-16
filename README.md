@@ -1,5 +1,9 @@
 # HotClub Appium iOS Tests
 
+📊 **[Latest Allure Test Report](https://jazzpigeon.github.io/HotClubAppAppiumTests/)** — updated automatically on every PR run.
+
+---
+
 End-to-end UI tests for the HotClub iOS app, built with **Appium** (XCUITest
 driver) and **WebdriverIO** (TypeScript).
 
@@ -220,10 +224,13 @@ Runner: npm ci → appium driver install → npm run wdioIosGHTestRun
 Appium launches WDA on the connected iPhone
         │
         ▼
-Tests run → JUnit XML written to results/
+Tests run → JUnit XML + Allure raw results written to disk
         │
         ▼
 action-junit-report publishes results as a PR check with inline annotations
+        │
+        ▼
+Allure HTML report generated and deployed to GitHub Pages
 ```
 
 ### Runner setup (one time per machine)
@@ -264,11 +271,35 @@ Configure these in **GitHub → Settings → Secrets and variables → Actions**
 | `WDA_BUNDLE_ID` | The bundle ID you set on the WebDriverAgentRunner target in Xcode |
 | `IOS_UDID` | *(optional)* Device UDID; omit to use `auto` |
 
-### Test results in the PR
+### Test results
 
-After each run, JUnit XML results are published as an **"iOS E2E Results"**
-check on the PR with pass/fail annotations. Raw logs and XML are also uploaded
-as workflow artifacts (retained 7 days).
+Each run produces three layers of reporting:
+
+1. **JUnit PR check** — pass/fail annotations appear directly on the PR under
+   "iOS E2E Results". Failed tests show the error message inline.
+2. **Allure report** — a full visual report with test history, durations, step
+   logs, and **inline screenshots for failures**, deployed to GitHub Pages after
+   every run:
+   👉 **https://jazzpigeon.github.io/HotClubAppAppiumTests/**
+3. **Workflow artifacts** — raw Appium logs, JUnit XML, Allure results, and
+   failure screenshots are uploaded and retained for 7 days.
+
+#### One-time GitHub Pages setup
+
+The Allure report requires GitHub Pages to be configured once:
+
+1. Go to your repo → **Settings → Pages**
+2. Under **Source**, select **GitHub Actions**
+3. Save
+
+#### gnu-tar prerequisite (self-hosted runner only)
+
+`actions/upload-pages-artifact` requires GNU tar (`gtar`). Install it once on
+the runner machine:
+
+```bash
+brew install gnu-tar
+```
 
 ---
 
