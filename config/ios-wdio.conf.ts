@@ -1,4 +1,5 @@
 import path from 'node:path';
+import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -66,9 +67,11 @@ export const config: WebdriverIO.Config = {
   // ---- Hooks ------------------------------------------------------------
   afterTest: async function (test, _context, { error }) {
     if (error) {
+      const screenshotDir = path.join(ROOT, 'results', 'screenshots');
+      fs.mkdirSync(screenshotDir, { recursive: true });
       const name = test.title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
       await browser.saveScreenshot(
-        path.join(ROOT, 'results', 'screenshots', `${name}_${Date.now()}.png`)
+        path.join(screenshotDir, `${name}_${Date.now()}.png`)
       );
     }
   },
