@@ -45,7 +45,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
+          # No cache: npm here — on a self-hosted runner node_modules and the
+          # npm cache already persist on disk, so uploading to GitHub's cache
+          # service is unnecessary and causes a large slow upload post-job.
 
       - name: Install dependencies
         run: npm ci
