@@ -65,6 +65,39 @@ jobs:
           report_paths: results/*.xml
           check_name: iOS E2E Results
 
+      - name: Upload failure screenshots
+        if: always()
+        id: upload-screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-screenshots
+          path: results/screenshots/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Write screenshot summary
+        if: always()
+        shell: bash
+        run: |
+          SCREENSHOT_DIR="results/screenshots"
+          if [ ! -d "$SCREENSHOT_DIR" ] || [ -z "$(ls -A $SCREENSHOT_DIR 2>/dev/null)" ]; then
+            echo "## ✅ No test failures — no screenshots captured." >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          echo "## ❌ Failure Screenshots" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Screenshots are attached as the **failure-screenshots** artifact." >> $GITHUB_STEP_SUMMARY
+          echo "Download it from [this run]($RUN_URL) to view the images." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test (filename) |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------------|" >> $GITHUB_STEP_SUMMARY
+          for f in "$SCREENSHOT_DIR"/*.png; do
+            echo "| $(basename $f) |" >> $GITHUB_STEP_SUMMARY
+          done
+
       - name: Upload Appium & test logs
         if: always()
         uses: actions/upload-artifact@v4
