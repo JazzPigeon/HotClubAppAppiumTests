@@ -141,6 +141,9 @@ jobs:
     runs-on: [self-hosted, macOS]
 
     steps:
+      - name: Ensure gtar is on PATH (required by upload-pages-artifact on macOS)
+        run: echo "/opt/homebrew/bin" >> $GITHUB_PATH
+
       - name: Download Allure report artifact
         uses: actions/download-artifact@v4
         with:
