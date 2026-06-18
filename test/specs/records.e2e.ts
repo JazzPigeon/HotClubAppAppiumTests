@@ -40,10 +40,6 @@ describe('HotClub - Records', () => {
     // Leaving Records hides its navigation bar.
     await RecordsScreen.navBar.waitForDisplayed({ reverse: true, timeout: 10000 });
 
-    // Adding the two lines below to force a test failure 
-    const firstRecord = RecordsScreen.firstRecord;
-    await expect(firstRecord).toBeDisplayed();
-
     await RecordsScreen.recordsTab.click();
     await expect(RecordsScreen.navBar).toBeDisplayed();
   });
