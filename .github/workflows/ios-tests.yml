@@ -33,6 +33,7 @@ jobs:
       IOS_DEVICE: ${{ vars.IOS_DEVICE }}     # e.g. "Cindy's iPhone"
       IOS_VERSION: ${{ vars.IOS_VERSION }}   # must match the device's iOS version
       IOS_APP: ${{ vars.IOS_APP }}           # path to a device-signed .ipa/.app on the runner
+      WDA_DERIVED_DATA_PATH: ${{ vars.WDA_DERIVED_DATA_PATH }} # prebuilt signed WebDriverAgent DerivedData
       # --- Sensitive: configure as repository "Secrets" ------------------
       IOS_UDID: ${{ secrets.IOS_UDID }}      # or leave unset to use "auto"
       XCODE_ORG_ID: ${{ secrets.XCODE_ORG_ID }}        # Apple Developer Team id
