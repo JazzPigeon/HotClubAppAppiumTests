@@ -69,9 +69,10 @@ export const config: WebdriverIO.Config = {
       // Appium rebuild it (which can't provision on a free team).
       'appium:updatedWDABundleId': WDA_BUNDLE_ID,
       'appium:derivedDataPath': WDA_DERIVED_DATA_PATH,
+      'appium:useNewWDA': false,
       'appium:usePrebuiltWDA': true,
 
-      'appium:noReset': false,
+      'appium:noReset': true,
       'appium:newCommandTimeout': 240,
       // Surface the raw xcodebuild output in the Appium log so WebDriverAgent
       // build/signing failures (e.g. code 65) show the underlying error.
