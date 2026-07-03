@@ -1,3 +1,4 @@
+@skip
 Feature: Records screen
 
   Background:

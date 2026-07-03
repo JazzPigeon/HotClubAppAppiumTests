@@ -1,4 +1,3 @@
-@skip
 Feature: Authentication
 
   Scenario: Show the authentication screen

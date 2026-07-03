@@ -5,11 +5,11 @@ import { $ } from '@wdio/globals';
  */
 class AuthScreen {
   get usernameField() {
-    return $('-ios predicate string:value == "Email"');
+    return $('~EmailTextField');
   }
 
   get passwordField() {
-    return $('-ios predicate string:value == "Password"');
+    return $('~PasswordTextField');
   }
 
   get signInButton() {

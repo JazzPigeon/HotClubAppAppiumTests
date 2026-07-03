@@ -18,9 +18,7 @@ class RecordsScreen {
 
   /** Back button in the navigation bar (present on pushed detail screens). */
   get navBackButton() {
-    return $(
-      '-ios class chain:**/XCUIElementTypeNavigationBar/XCUIElementTypeButton[1]'
-    );
+    return $('~BackButton');
   }
 
   get tabBar() {
@@ -55,7 +53,7 @@ class RecordsScreen {
   /** The tappable button inside the first record row. */
   get firstRecord() {
     return $(
-      '-ios class chain:**/XCUIElementTypeCollectionView/XCUIElementTypeCell[1]/**/XCUIElementTypeButton[1]'
+      '-ios class chain:**/XCUIElementTypeButton[`name == "RecordListCell"`][1]'
     );
   }
 
