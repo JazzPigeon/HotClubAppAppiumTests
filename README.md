@@ -5,7 +5,7 @@
 ---
 
 End-to-end UI tests for the HotClub iOS app, built with **Appium** (XCUITest
-driver) and **WebdriverIO** (TypeScript).
+driver), **WebdriverIO**, **Cucumber**, and **TypeScript**.
 
 Tests can run in two modes:
 - **Locally** against an iOS Simulator on your Mac.
@@ -49,8 +49,8 @@ npm test
 ```
 
 WebdriverIO automatically starts/stops the Appium server, boots the Simulator,
-installs the app, and runs the specs. TypeScript is compiled on the fly — no
-build step needed.
+installs the app, and runs the Gherkin feature files. TypeScript step
+definitions are compiled on the fly — no build step needed.
 
 Override the target device at runtime:
 
@@ -93,7 +93,8 @@ npm run typecheck
 │  WebdriverIO (test runner)                       │
 │  • Spawns the Appium server automatically        │
 │  • Loads capabilities from the config            │
-│  • Runs specs in test/specs/                     │
+│  • Runs features in test/features/               │
+│  • Binds steps from test/step-definitions/       │
 └──────────────┬───────────────────────────────────┘
                │ WebDriver protocol (HTTP)
                ▼
@@ -131,6 +132,20 @@ key ways:
 
 All sensitive values (`XCODE_ORG_ID`, `IOS_UDID`, `WDA_BUNDLE_ID`) are read
 from environment variables so nothing secret is committed to the repository.
+
+---
+
+## Test architecture
+
+Feature files live in `test/features/**/*.feature` and describe behavior in
+Gherkin syntax. Step definitions live in `test/step-definitions/**/*.ts` and
+translate those steps into WebdriverIO/Appium actions. Page objects live in
+`test/pageobjects/**/*.ts` and own selectors plus reusable screen interactions.
+
+Scenarios tagged `@skip` are excluded by the shared Cucumber tag expression in
+both WebdriverIO configs. The auth feature is currently skipped; if you enable
+it, provide credentials through `HOTCLUB_TEST_EMAIL` and
+`HOTCLUB_TEST_PASSWORD`.
 
 ---
 
@@ -327,10 +342,15 @@ HotClub-appium-ios-tests/
 │   ├── ios-wdio.conf.ts            # Simulator config (npm test)
 │   └── ios-gh-test-run-wdio.conf.ts # Real-device config (CI + local device)
 ├── test/
+│   ├── features/
+│   │   ├── auth.feature            # Skipped auth scenarios
+│   │   └── records.feature         # Gherkin scenarios for Records
 │   ├── pageobjects/
+│   │   ├── auth.page.ts            # Selectors for the auth screen
 │   │   └── records.page.ts         # Selectors for the Records screen + tab bar
-│   └── specs/
-│       └── records.e2e.ts          # E2E tests for the HotClub app
+│   └── step-definitions/
+│       ├── auth.steps.ts           # Cucumber bindings for auth scenarios
+│       └── records.steps.ts        # Cucumber bindings for Records scenarios
 ├── tsconfig.json
 ├── package.json
 └── README.md

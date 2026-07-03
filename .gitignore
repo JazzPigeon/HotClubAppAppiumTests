@@ -9,7 +9,6 @@ apps/*.zip
 
 # WDIO / test output
 results/
-results/screenshots/
 allure-results/
 allure-report/
 .wdio-vscode-service/

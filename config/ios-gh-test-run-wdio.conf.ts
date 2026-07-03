@@ -43,7 +43,7 @@ export const config: WebdriverIO.Config = {
   tsConfigPath: path.join(ROOT, 'tsconfig.json'),
 
   // ---- Test files -------------------------------------------------------
-  specs: [path.join(ROOT, 'test', 'specs', '**', '*.e2e.ts')],
+  specs: [path.join(ROOT, 'test', 'features', '**', '*.feature')],
   maxInstances: 1,
 
   // ---- Capabilities (real device) --------------------------------------
@@ -109,18 +109,18 @@ export const config: WebdriverIO.Config = {
   connectionRetryCount: 1,
 
   // ---- Hooks ------------------------------------------------------------
-  afterTest: async function (test, _context, { error }) {
+  afterStep: async function (step, _scenario, { error }) {
     if (error) {
       const screenshotDir = path.join(ROOT, 'results', 'screenshots');
       fs.mkdirSync(screenshotDir, { recursive: true });
-      const name = test.title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+      const name = step.text.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
       await browser.saveScreenshot(
         path.join(screenshotDir, `${name}_${Date.now()}.png`)
       );
     }
   },
 
-  framework: 'mocha',
+  framework: 'cucumber',
   reporters: [
     'spec',
     // JUnit XML for CI: GitHub Actions publishes these as a PR check.
@@ -144,8 +144,9 @@ export const config: WebdriverIO.Config = {
       },
     ],
   ],
-  mochaOpts: {
-    ui: 'bdd',
+  cucumberOpts: {
+    require: [path.join(ROOT, 'test', 'step-definitions', '**', '*.ts')],
+    tagExpression: 'not @skip',
     timeout: 120000,
   },
 };

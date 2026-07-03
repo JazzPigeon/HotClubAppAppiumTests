@@ -7,7 +7,7 @@
     "types": [
       "node",
       "@wdio/globals/types",
-      "@wdio/mocha-framework",
+      "@wdio/cucumber-framework",
       "expect-webdriverio"
     ],
     "esModuleInterop": true,
