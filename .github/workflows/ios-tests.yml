@@ -39,6 +39,9 @@ jobs:
       XCODE_ORG_ID: ${{ secrets.XCODE_ORG_ID }}        # Apple Developer Team id
       XCODE_SIGNING_ID: ${{ secrets.XCODE_SIGNING_ID }} # optional; defaults to "Apple Development"
       WDA_BUNDLE_ID: ${{ secrets.WDA_BUNDLE_ID }}       # optional; for personal provisioning
+      # --- Sensitive: Auth secrets ------------------
+      HOTCLUB_TEST_EMAIL: ${{ secrets.HOTCLUB_TEST_EMAIL }}
+      HOTCLUB_TEST_PASSWORD: ${{ secrets.HOTCLUB_TEST_PASSWORD }}
 
     steps:
       - name: Checkout
