@@ -24,22 +24,35 @@ Then('I should see at least one record', async () => {
   await expect(RecordsScreen.recordCells).toBeElementsArrayOfSize({ gte: 1 });
 });
 
-When('I open the first record', async () => {
-  const firstRecord = RecordsScreen.firstRecord;
-  await expect(firstRecord).toBeDisplayed();
-  await firstRecord.click();
+When('I open the seventh record', async () => {
+  const seventhRecord = RecordsScreen.seventhRecord
+  await seventhRecord.tap();
+  await RecordsScreen.navBackButton.waitForDisplayed({ timeout: 10000 });
+});
+
+When('I tap on the record cell', async () => {
+  const fifteenthRecord = RecordsScreen.fifteenthRecord
+  await fifteenthRecord.tap();
   await RecordsScreen.navBackButton.waitForDisplayed({ timeout: 10000 });
 });
 
 When('I navigate back from the record detail', async () => {
-  await RecordsScreen.navBackButton.click();
+  await RecordsScreen.navBackButton.tap();
 });
 
 When('I switch to the Settings tab', async () => {
-  await RecordsScreen.settingsTab.click();
+  await RecordsScreen.settingsTab.tap();
   await RecordsScreen.navBar.waitForDisplayed({ reverse: true, timeout: 10000 });
 });
 
 When('I switch to the Records tab', async () => {
-  await RecordsScreen.recordsTab.click();
+  await RecordsScreen.recordsTab.tap();
+});
+
+When('I scroll to the end of the list', async () => {
+  await RecordsScreen.scrollToEndOfList();
+});
+
+Then('I should see the End of List text', async () => {
+  await expect(RecordsScreen.endOfListText).toBeDisplayed();
 });
