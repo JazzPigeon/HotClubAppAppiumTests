@@ -8,18 +8,13 @@ apps/*.ipa
 apps/*.zip
 
 # WDIO / test output
+results/
+allure-results/
+allure-report/
 .wdio-vscode-service/
 .DS_Store
 
-# Secrets / credentials (e.g. BrowserStack username & access key)
+# Secrets / credentials
 .env
 .env.*
 !.env.example
-
-# BrowserStack
-# Local testing binary (downloaded at runtime) and its logs/tunnel artifacts
-BrowserStackLocal
-BrowserStackLocal.exe
-browserstack.err
-browserstack.log
-local.log

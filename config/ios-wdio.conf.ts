@@ -1,19 +1,23 @@
 import path from 'node:path';
+import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Project root, one level up from this config/ folder. All project-relative
+// paths are anchored here so the config can live anywhere.
+const ROOT = path.join(__dirname, '..');
 
 // Path to your iOS build. A .app (Simulator build) or .ipa goes in ./apps.
 // Override at runtime with:  IOS_APP=/abs/path/to/MyApp.app npm test
 const APP_PATH =
-  process.env.IOS_APP || path.join(__dirname, 'apps', 'HotClubApp.app');
+  process.env.IOS_APP || path.join(ROOT, 'apps', 'HotClubApp.app');
 
 export const config: WebdriverIO.Config = {
   runner: 'local',
-  tsConfigPath: './tsconfig.json',
+  tsConfigPath: path.join(ROOT, 'tsconfig.json'),
 
   // ---- Test files -------------------------------------------------------
-  specs: ['./test/specs/**/*.e2e.ts'],
+  specs: [path.join(ROOT, 'test', 'features', '**', '*.feature')],
   maxInstances: 1,
 
   // ---- Capabilities -----------------------------------------------------
@@ -45,7 +49,7 @@ export const config: WebdriverIO.Config = {
           relaxedSecurity: true,
         },
         // Uses the locally installed appium in node_modules/.bin
-        logPath: './logs',
+        logPath: path.join(ROOT, 'logs'),
       },
     ],
   ],
@@ -60,10 +64,33 @@ export const config: WebdriverIO.Config = {
   connectionRetryTimeout: 360000,
   connectionRetryCount: 1,
 
-  framework: 'mocha',
-  reporters: ['spec'],
-  mochaOpts: {
-    ui: 'bdd',
+  // ---- Hooks ------------------------------------------------------------
+  afterStep: async function (step, _scenario, { error }) {
+    if (error) {
+      const screenshotDir = path.join(ROOT, 'results', 'screenshots');
+      fs.mkdirSync(screenshotDir, { recursive: true });
+      const name = step.text.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+      await browser.saveScreenshot(
+        path.join(screenshotDir, `${name}_${Date.now()}.png`)
+      );
+    }
+  },
+
+  framework: 'cucumber',
+  reporters: [
+    'spec',
+    [
+      'allure',
+      {
+        outputDir: path.join(ROOT, 'allure-results'),
+        disableWebdriverStepsReporting: false,
+        disableWebdriverScreenshotsReporting: false,
+      },
+    ],
+  ],
+  cucumberOpts: {
+    require: [path.join(ROOT, 'test', 'step-definitions', '**', '*.ts')],
+    tagExpression: 'not @skip',
     timeout: 120000,
   },
 };

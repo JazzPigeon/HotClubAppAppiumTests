@@ -7,7 +7,7 @@
     "types": [
       "node",
       "@wdio/globals/types",
-      "@wdio/mocha-framework",
+      "@wdio/cucumber-framework",
       "expect-webdriverio"
     ],
     "esModuleInterop": true,
@@ -17,5 +17,5 @@
     "resolveJsonModule": true,
     "verbatimModuleSyntax": false
   },
-  "include": ["wdio.conf.ts", "test/**/*.ts"]
+  "include": ["config/**/*.ts", "test/**/*.ts"]
 }
