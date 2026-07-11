@@ -65,57 +65,86 @@ class RecordsScreen {
     );
   }
 
-    /** The tappable button inside the seventh record row. */
-    get seventhRecord() {
-      return $(
-        '-ios class chain:**/XCUIElementTypeButton[`name == "RecordListCell"`][7]'
-      );
-    }
+  /** The tappable button inside the seventh record row. */
+  get seventhRecord() {
+    return $(
+      '-ios class chain:**/XCUIElementTypeButton[`name == "RecordListCell"`][7]'
+    );
+  }
 
-    /** The tappable button inside the fifteenth record row. */
-    get fifteenthRecord() {
-      return $(
-        '-ios predicate string:type == "XCUIElementTypeButton" AND name == "RecordListCell" AND label CONTAINS "Wench"'
-      );
-    }
+  /** The tappable button inside the fifteenth record row. */
+  get fifteenthRecord() {
+    return $(
+      '-ios predicate string:type == "XCUIElementTypeButton" AND name == "RecordListCell" AND label CONTAINS "Wench"'
+    );
+  }
 
   async waitForDisplayed(timeout = 15000): Promise<void> {
     await this.navBar.waitForDisplayed({ timeout });
   }
 
-  async scrollToEndOfList() {
-    const maxSwipes = 10;
+  async scrollToEndOfList(): Promise<void> {
+    await this.swipeUntilDisplayed(this.endOfListText, 15, 'End of List');
+  }
 
+  async openSeventhRecord(): Promise<void> {
+    await this.swipeUntilDisplayed(this.seventhRecord, 15, 'seventh record');
+    await this.seventhRecord.tap();
+    await this.navBackButton.waitForDisplayed({ timeout: 10000 });
+  }
+
+  async openFifteenthRecord(): Promise<void> {
+    await this.swipeUntilDisplayed(this.fifteenthRecord, 15, 'fifteenth record');
+    await this.fifteenthRecord.tap();
+    await this.navBackButton.waitForDisplayed({ timeout: 10000 });
+  }
+
+  async swipeUntilDisplayed(
+    targetElement: ReturnType<typeof $>,
+    maxSwipes = 15,
+    label = 'element'
+  ): Promise<void> {
     for (let i = 0; i < maxSwipes; i++) {
-      if (await this.endOfListText.isDisplayed().catch(() => false)) {
-        await this.endOfListText.waitForDisplayed({ timeout: 2000 });
+      if (await targetElement.isDisplayed().catch(() => false)) {
+        await targetElement.waitForDisplayed({ timeout: 2000 });
         return;
       }
-      
+
       await this.swipeUpOnList();
       await driver.pause(500);
     }
+
+    throw new Error(`${label} was not visible after ${maxSwipes} swipes.`);
   }
 
-  // Helper methods
-  async swipeUpOnList() {
-    const list = await this.recordListContainer;
-    await list.waitForDisplayed({ timeout: 10000 });
-
-    const location = await list.getLocation();
-    const size = await list.getSize();
-
-    const x = Math.round(location.x + size.width / 2);
-    const fromY = Math.round(location.y + size.height * 0.8);
-    const toY = Math.round(location.y + size.height * 0.2);
+  /** Window-level swipe — more reliable on real devices than element-relative coords. */
+  async swipeUpOnScreen(): Promise<void> {
+    const { width, height } = await driver.getWindowRect();
+    const x = Math.round(width / 2);
+    const fromY = Math.round(height * 0.75);
+    const toY = Math.round(height * 0.25);
 
     await driver.execute('mobile: dragFromToForDuration', {
-      duration: 0.5,
+      duration: 1.0,
       fromX: x,
       fromY,
       toX: x,
       toY,
     });
+  }
+
+  async swipeUpOnList(): Promise<void> {
+    const list = this.recordListContainer;
+    await list.waitForDisplayed({ timeout: 10000 });
+
+    try {
+      await driver.execute('mobile: scroll', {
+        elementId: list.elementId,
+        direction: 'down',
+      });
+    } catch {
+      await this.swipeUpOnScreen();
+    }
   }
 }
 
