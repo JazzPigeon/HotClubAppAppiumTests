@@ -50,6 +50,12 @@ class RecordsScreen {
     return $$('-ios class chain:**/XCUIElementTypeCollectionView/XCUIElementTypeCell');
   }
 
+  /**
+   * SwiftUI list wrapper — useful for locating cells, but not for scrolling.
+   * On real devices XCUITest may expose this as "CollectionView (Identity Binding)":
+   * the container exists in the tree (SwiftUI tracks row identity here) yet fails
+   * isDisplayed(), so scroll via swipeUpOnScreen() and target leaf elements instead.
+   */
   get recordListContainer() {
     return $('-ios predicate string:type == "XCUIElementTypeCollectionView"');
   }
@@ -105,45 +111,56 @@ class RecordsScreen {
     label = 'element'
   ): Promise<void> {
     for (let i = 0; i < maxSwipes; i++) {
-      if (await targetElement.isDisplayed().catch(() => false)) {
-        await targetElement.waitForDisplayed({ timeout: 2000 });
+      if (await this.isElementVisible(targetElement)) {
         return;
       }
 
-      await this.swipeUpOnList();
+      await this.swipeUpOnScreen();
       await driver.pause(500);
     }
 
     throw new Error(`${label} was not visible after ${maxSwipes} swipes.`);
   }
 
-  /** Window-level swipe — more reliable on real devices than element-relative coords. */
-  async swipeUpOnScreen(): Promise<void> {
-    const { width, height } = await driver.getWindowRect();
-    const x = Math.round(width / 2);
-    const fromY = Math.round(height * 0.75);
-    const toY = Math.round(height * 0.25);
+  /** True when the element exists and is visible within the viewport. */
+  async isElementVisible(element: ReturnType<typeof $>): Promise<boolean> {
+    if (!(await element.isExisting())) {
+      return false;
+    }
 
-    await driver.execute('mobile: dragFromToForDuration', {
-      duration: 1.0,
-      fromX: x,
-      fromY,
-      toX: x,
-      toY,
-    });
+    if (!(await element.isDisplayed().catch(() => false))) {
+      return false;
+    }
+
+    const location = await element.getLocation();
+    const size = await element.getSize();
+    const { height: windowHeight } = await driver.getWindowRect();
+
+    return location.y >= 0 && location.y + size.height <= windowHeight;
   }
 
-  async swipeUpOnList(): Promise<void> {
-    const list = this.recordListContainer;
-    await list.waitForDisplayed({ timeout: 10000 });
-
+  /**
+   * Window-level swipe using WDA's native XCTest gesture.
+   * Avoids targeting the CollectionView directly — on real devices SwiftUI
+   * collection views often exist in the tree but fail isDisplayed(), which
+   * previously blocked scrolling entirely.
+   */
+  async swipeUpOnScreen(): Promise<void> {
     try {
-      await driver.execute('mobile: scroll', {
-        elementId: list.elementId,
-        direction: 'down',
-      });
+      await driver.execute('mobile: swipe', { direction: 'up', velocity: 500 });
     } catch {
-      await this.swipeUpOnScreen();
+      const { width, height } = await driver.getWindowRect();
+      const x = Math.round(width / 2);
+      const fromY = Math.round(height * 0.75);
+      const toY = Math.round(height * 0.25);
+
+      await driver.execute('mobile: dragFromToForDuration', {
+        duration: 1.0,
+        fromX: x,
+        fromY,
+        toX: x,
+        toY,
+      });
     }
   }
 }
