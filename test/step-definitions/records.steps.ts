@@ -25,15 +25,11 @@ Then('I should see at least one record', async () => {
 });
 
 When('I open the seventh record', async () => {
-  const seventhRecord = RecordsScreen.seventhRecord
-  await seventhRecord.tap();
-  await RecordsScreen.navBackButton.waitForDisplayed({ timeout: 10000 });
+  await RecordsScreen.openSeventhRecord();
 });
 
 When('I tap on the record cell', async () => {
-  const fifteenthRecord = RecordsScreen.fifteenthRecord
-  await fifteenthRecord.tap();
-  await RecordsScreen.navBackButton.waitForDisplayed({ timeout: 10000 });
+  await RecordsScreen.openFifteenthRecord();
 });
 
 When('I navigate back from the record detail', async () => {

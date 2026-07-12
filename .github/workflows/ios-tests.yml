@@ -61,6 +61,29 @@ jobs:
       - name: Ensure XCUITest driver is installed
         run: npx appium driver install xcuitest || echo "xcuitest driver already installed"
 
+      - name: Verify prebuilt WebDriverAgent exists
+        shell: bash
+        run: |
+          if [ -z "$WDA_DERIVED_DATA_PATH" ]; then
+            echo "::error::WDA_DERIVED_DATA_PATH is not set. Add it as a repository Variable (Settings → Secrets and variables → Actions → Variables)."
+            exit 1
+          fi
+
+          WDA_APP="$WDA_DERIVED_DATA_PATH/Build/Products/Debug-iphoneos/WebDriverAgentRunner-Runner.app"
+
+          if [ ! -d "$WDA_APP" ]; then
+            echo "::error::Prebuilt WebDriverAgent not found at: $WDA_APP"
+            echo ""
+            echo "Appium is configured with usePrebuiltWDA=true, so it will not build WDA during CI."
+            echo "Build and install WDA once on the connected iPhone in Xcode:"
+            echo "  open node_modules/appium-xcuitest-driver/node_modules/appium-webdriveragent/WebDriverAgent.xcodeproj"
+            echo "Then: set Team + Bundle ID on WebDriverAgentLib/WebDriverAgentRunner, select your iPhone, Product → Test (⌘U)."
+            echo "After a successful run, set WDA_DERIVED_DATA_PATH to the DerivedData folder that contains Build/Products/Debug-iphoneos/WebDriverAgentRunner-Runner.app"
+            exit 1
+          fi
+
+          echo "Found prebuilt WebDriverAgent at: $WDA_APP"
+
       - name: Run iOS E2E tests
         run: npm run wdioIosGHTestRun
 
