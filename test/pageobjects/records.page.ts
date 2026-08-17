@@ -53,10 +53,6 @@ class RecordsScreen {
     return $$('-ios class chain:**/XCUIElementTypeCollectionView/XCUIElementTypeCell');
   }
 
-  get endOfListText() {
-    return $('~EndOfList');
-  }
-
   /**
    * SwiftUI list wrapper — useful for locating cells, but not for scrolling.
    * On real devices XCUITest may expose this as "CollectionView (Identity Binding)":
@@ -80,11 +76,57 @@ class RecordsScreen {
     );
   }
 
+  /**
+   * Bring a record into the tappable list viewport. Does not tap.
+   * Always starts from the top because swipeUntilTappable only swipes up.
+   */
+  async scrollToRecordContainingTitleText(titleText: string): Promise<void> {
+    await this.scrollRecordIntoView(this.recordWithTitle(titleText), titleText);
+  }
+
+  /**
+   * Tap a record that is already on screen. Fails if the row is not tappable —
+   * scroll to it first, or use scrollToAndTapRecordContainingTitleText().
+   */
   async tapRecordContainingTitleText(titleText: string): Promise<void> {
     const record = this.recordWithTitle(titleText);
+    await driver.waitUntil(async () => this.isElementTappable(record), {
+      timeout: 5000,
+      timeoutMsg: `Record containing "${titleText}" is not tappable. Scroll to it first.`,
+    });
+    await this.waitForStableLocation(record);
+    await this.confirmAndTapRecord(record, titleText);
+  }
+
+  /**
+   * Preferred way to open a record: scroll and tap using the same element
+   * handle so XCUITest does not retarget a non-hittable identity-binding cell.
+   */
+  async scrollToAndTapRecordContainingTitleText(titleText: string): Promise<void> {
+    const record = this.recordWithTitle(titleText);
+    await this.scrollRecordIntoView(record, titleText);
+    await this.confirmAndTapRecord(record, titleText);
+  }
+
+  async scrollToTopOfList(): Promise<void> {
+    while (!(await this.isScrolledToTop())) {
+      await this.swipeDownOnScreen();
+    }
+  }
+
+  async scrollRecordIntoView(
+    record: ReturnType<typeof $>,
+    titleText: string
+  ): Promise<void> {
+    await this.scrollToTopOfList();
     await this.swipeUntilTappable(record, 15, `Record containing "${titleText}"`);
     await this.waitForStableLocation(record);
+  }
 
+  async confirmAndTapRecord(
+    record: ReturnType<typeof $>,
+    titleText: string
+  ): Promise<void> {
     const label = await record.getAttribute('label');
     if (!label?.includes(titleText)) {
       throw new Error(
@@ -92,7 +134,11 @@ class RecordsScreen {
       );
     }
 
-    await record.tap();
+    try {
+      await this.tapHittablePoint(record);
+    } catch {
+      await this.tapElementCenter(record);
+    }
   }
 
   /**

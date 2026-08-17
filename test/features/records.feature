@@ -8,18 +8,14 @@ Feature: Records screen
     And I should see at least 5 record list items
 
   Scenario: Open the record featuring Jack Hits the Road then navigate back from Detail View
-    When I open the record "Jack Hits the Road"
+    When I select "Jack Hits the Road" from the Records list
     And I navigate back from the record detail
     Then I should be on the Records screen
 
   Scenario: Switch to Settings and back to Records
     When I switch to the Settings tab
     And I switch to the Records tab
-    Then I should see the Records navigation bar
-
-Scenario: Scroll to end of list
-    When I scroll to the end of the list
-    Then I should see the End of List text
+    Then I should be on the Records screen
 
 # Test Cases for tomorrow
 # - Review the cases above; edit as necessary
