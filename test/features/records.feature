@@ -10,7 +10,7 @@ Feature: Records screen
   Scenario: Open the record featuring Jack Hits the Road then navigate back from Detail View
     When I open the record "Jack Hits the Road"
     And I navigate back from the record detail
-    Then I am on the Records screen
+    Then I should be on the Records screen
 
   Scenario: Switch to Settings and back to Records
     When I switch to the Settings tab

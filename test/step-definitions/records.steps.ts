@@ -3,6 +3,11 @@ import { expect } from '@wdio/globals';
 import RecordsScreen from '../pageobjects/records.page.js';
 
 Given('I am on the Records screen', async () => {
+  await RecordsScreen.recoverToRecordsScreen();
+  await RecordsScreen.waitForDisplayed();
+});
+
+Then('I should be on the Records screen', async () => {
   await RecordsScreen.waitForDisplayed();
 });
 
@@ -26,12 +31,12 @@ When('I open the record {string}', async (songTitle) => {
     await RecordsScreen.swipeDownOnScreen();
   }
   await RecordsScreen.tapRecordContainingTitleText(songTitle)
+  await RecordsScreen.navBackButton.waitForDisplayed();
   console.log(`Tapped on the record ${songTitle}`);
 });
 
 When('I navigate back from the record detail', async () => {
-  await RecordsScreen.navBackButton.waitForDisplayed();
-  await RecordsScreen.navBackButton.tap();
+  await RecordsScreen.navigateBackFromDetail();
 });
 
 When('I switch to the Settings tab', async () => {

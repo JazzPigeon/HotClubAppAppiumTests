@@ -16,7 +16,10 @@ class RecordsScreen {
     );
   }
 
-  /** Back button in the navigation bar (present on pushed detail screens). */
+  /**
+   * Custom back control on RecordDetailView (accessibility id `BackButton`).
+   * Tap via tapHittablePoint() / navigateBackFromDetail(), not `.tap()`.
+   */
   get navBackButton() {
     return $('~BackButton');
   }
@@ -90,6 +93,137 @@ class RecordsScreen {
     }
 
     await record.tap();
+  }
+
+  /**
+   * Native XCUITest tap at the element's hittable point.
+   *
+   * Do not use WebdriverIO `.tap()` for nav-bar controls. On iOS it sends
+   * `mobile: tap` with `{ x: 0, y: 0 }` relative to the element — the top-left
+   * corner. On a real device that lands in the status bar / Dynamic Island and
+   * the gesture is swallowed; the same call works on the Simulator.
+   */
+  async tapHittablePoint(element: ReturnType<typeof $>): Promise<void> {
+    await driver.execute('mobile: tapWithNumberOfTaps', {
+      elementId: element.elementId,
+      numberOfTaps: 1,
+      numberOfTouches: 1,
+    });
+  }
+
+  /** Screen-absolute tap at the element's center. */
+  async tapElementCenter(element: ReturnType<typeof $>): Promise<void> {
+    const location = await element.getLocation();
+    const size = await element.getSize();
+    await driver.execute('mobile: tap', {
+      x: Math.round(location.x + size.width / 2),
+      y: Math.round(location.y + size.height / 2),
+    });
+  }
+
+  async isDisplayedNow(
+    element: ReturnType<typeof $>,
+    timeout = 500
+  ): Promise<boolean> {
+    return element
+      .waitForDisplayed({ timeout })
+      .then(() => true)
+      .catch(() => false);
+  }
+
+  async isOnRecordsScreen(): Promise<boolean> {
+    return this.isDisplayedNow(this.navBar);
+  }
+
+  /**
+   * Pop RecordDetailView via the nav back button.
+   *
+   * Tries a native XCUIElement tap first, then a center-point coordinate tap
+   * if the screen did not dismiss. Waits until BackButton is gone so a no-op
+   * tap fails this step instead of leaking into later scenarios.
+   */
+  async navigateBackFromDetail(): Promise<void> {
+    const back = this.navBackButton;
+    await back.waitForDisplayed();
+
+    try {
+      await this.tapHittablePoint(back);
+    } catch {
+      await this.tapElementCenter(back);
+    }
+
+    const dismissed = await back
+      .waitForDisplayed({ reverse: true, timeout: 3000 })
+      .then(() => true)
+      .catch(() => false);
+
+    if (!dismissed) {
+      await this.tapElementCenter(back);
+      await back.waitForDisplayed({
+        reverse: true,
+        timeout: 10000,
+        timeoutMsg:
+          'BackButton was still visible after tapping — did not leave RecordDetailView',
+      });
+    }
+  }
+
+  /**
+   * Best-effort return to the Records list so a failed scenario cannot leave
+   * later ones stranded on a pushed screen or another tab.
+   */
+  async recoverToRecordsScreen(): Promise<void> {
+    if (await this.isOnRecordsScreen()) {
+      return;
+    }
+
+    for (let i = 0; i < 3; i++) {
+      if (!(await this.isDisplayedNow(this.navBackButton))) {
+        break;
+      }
+
+      try {
+        await this.tapHittablePoint(this.navBackButton);
+      } catch {
+        await this.tapElementCenter(this.navBackButton);
+      }
+
+      await driver.pause(400);
+
+      if (await this.isOnRecordsScreen()) {
+        return;
+      }
+    }
+
+    if (
+      !(await this.isOnRecordsScreen()) &&
+      (await this.isDisplayedNow(this.recordsTab))
+    ) {
+      await this.recordsTab.tap();
+      await driver.pause(400);
+    }
+
+    if (await this.isOnRecordsScreen()) {
+      return;
+    }
+
+    await this.relaunchApp();
+
+    if (await this.isDisplayedNow(this.navBackButton, 2000)) {
+      try {
+        await this.tapHittablePoint(this.navBackButton);
+      } catch {
+        await this.tapElementCenter(this.navBackButton);
+      }
+    }
+  }
+
+  async relaunchApp(): Promise<void> {
+    const info = (await driver.execute('mobile: activeAppInfo')) as {
+      bundleId: string;
+    };
+    await driver.execute('mobile: terminateApp', { bundleId: info.bundleId });
+    await driver.execute('mobile: launchApp', { bundleId: info.bundleId });
   }
 
   async waitForDisplayed(timeout = 15000): Promise<void> {
