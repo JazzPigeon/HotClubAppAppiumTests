@@ -26,7 +26,7 @@ export const config: WebdriverIO.Config = {
       platformName: 'iOS',
       'appium:automationName': 'XCUITest',
       'appium:deviceName': process.env.IOS_DEVICE || 'iPhone 17 Pro',
-      'appium:platformVersion': process.env.IOS_VERSION || '26.5',
+      'appium:platformVersion': process.env.IOS_VERSION || '26.6',
       'appium:app': APP_PATH,
       // Speeds up repeat runs by reusing the booted simulator.
       'appium:noReset': false,
