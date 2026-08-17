@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import '../../config/load-env.js';
 import AuthScreen from '../pageobjects/auth.page.js';
 import RecordsScreen from '../pageobjects/records.page.js';
+import SettingsScreen from '../pageobjects/settings.page.js';
 
 const FALLBACK_BUNDLE_ID = 'tech.cindymichalowski.HotClubApp.HotClubApp';
 const SPRINGBOARD_BUNDLE_ID = 'com.apple.springboard';
@@ -14,14 +15,20 @@ let cachedBundleId: string | undefined;
  * Force a logged-out cold launch. Used by @loggedOut / Login-screen Background.
  *
  * If the Login screen is already showing, the app is only terminated and
- * relaunched so the scenario still starts from process start. Otherwise the
- * app is uninstalled (and Simulator keychains are cleared) so a persisted
- * session cannot leak in.
+ * relaunched so the scenario still starts from process start.
+ *
+ * Otherwise:
+ * - Real device: sign out from Settings. Uninstall does not clear Keychain
+ *   on hardware, so a reinstall would still restore the session.
+ * - Simulator: uninstall and clear keychains, then relaunch.
  */
 export async function ensureLoggedOut(): Promise<void> {
   const screen = await waitForAuthOrRecords(15000).catch(() => null);
 
   if (screen === 'auth') {
+    await relaunchHotClubApp();
+  } else if (isRealIosDevice()) {
+    await signOutViaSettings();
     await relaunchHotClubApp();
   } else {
     await resetAppAndLaunch();
@@ -94,6 +101,29 @@ export function getTestCredentials(): { email: string; password: string } {
   }
 
   return { email, password };
+}
+
+async function signOutViaSettings(): Promise<void> {
+  if (await RecordsScreen.isDisplayedNow(RecordsScreen.navBackButton, 1000)) {
+    await RecordsScreen.navigateBackFromDetail();
+  }
+
+  if (!(await SettingsScreen.isDisplayedNow(1500))) {
+    await SettingsScreen.openFromTabBar();
+  }
+
+  await SettingsScreen.tapSignOut();
+  await AuthScreen.waitForDisplayed(20000);
+}
+
+function isRealIosDevice(): boolean {
+  const caps = driver.capabilities as Record<string, unknown>;
+  const simulator = caps['appium:isSimulator'] ?? caps.isSimulator;
+  if (typeof simulator === 'boolean') {
+    return !simulator;
+  }
+
+  return caps['appium:xcodeOrgId'] != null;
 }
 
 async function resetAppAndLaunch(): Promise<void> {
