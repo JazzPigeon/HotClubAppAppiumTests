@@ -143,9 +143,15 @@ translate those steps into WebdriverIO/Appium actions. Page objects live in
 `test/pageobjects/**/*.ts` and own selectors plus reusable screen interactions.
 
 Scenarios tagged `@skip` are excluded by the shared Cucumber tag expression in
-both WebdriverIO configs. The auth feature is currently skipped; if you enable
-it, provide credentials through `HOTCLUB_TEST_EMAIL` and
-`HOTCLUB_TEST_PASSWORD`.
+both WebdriverIO configs.
+
+Auth and logged-in Records scenarios read `HOTCLUB_TEST_EMAIL` and
+`HOTCLUB_TEST_PASSWORD` from the environment:
+
+- **Local `npm test`:** copy `.env.example` to `.env` and fill in the values.
+  GitHub Secrets are not available to local runs.
+- **GitHub Actions:** add repository Secrets with those exact names. The
+  workflow maps them into the job environment.
 
 ---
 

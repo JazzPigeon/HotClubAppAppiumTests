@@ -1,10 +1,10 @@
 import { Given, Then, When } from '@wdio/cucumber-framework';
 import { expect } from '@wdio/globals';
 import RecordsScreen from '../pageobjects/records.page.js';
+import { ensureLoggedIn } from '../helpers/app-session.js';
 
 Given('I am on the Records screen', async () => {
-  await RecordsScreen.recoverToRecordsScreen();
-  await RecordsScreen.waitForDisplayed();
+  await ensureLoggedIn();
 });
 
 Then('I should be on the Records screen', async () => {
