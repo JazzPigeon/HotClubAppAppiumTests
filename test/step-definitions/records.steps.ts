@@ -6,33 +6,31 @@ Given('I am on the Records screen', async () => {
   await RecordsScreen.waitForDisplayed();
 });
 
-Then('I should see the Records screen', async () => {
-  await RecordsScreen.waitForDisplayed();
+Then('I should see the Records screen title and navigation', async () => {
+  await expect(RecordsScreen.navBar).toBeDisplayed();
+  await expect(RecordsScreen.recordsTab).toBeDisplayed();
+  await expect(RecordsScreen.addTab).toBeDisplayed();
+  await expect(RecordsScreen.settingsTab).toBeDisplayed();
+});
+
+Then('I should see at least {int} record list items', async (recordCount) => {
+  await expect(RecordsScreen.recordCells).toBeElementsArrayOfSize({ gte: recordCount });
 });
 
 Then('I should see the Records navigation bar', async () => {
   await expect(RecordsScreen.navBar).toBeDisplayed();
 });
 
-Then('I should see the Records, Add, and Settings tabs', async () => {
-  await expect(RecordsScreen.recordsTab).toBeDisplayed();
-  await expect(RecordsScreen.addTab).toBeDisplayed();
-  await expect(RecordsScreen.settingsTab).toBeDisplayed();
-});
-
-Then('I should see at least one record', async () => {
-  await expect(RecordsScreen.recordCells).toBeElementsArrayOfSize({ gte: 1 });
-});
-
-When('I open the seventh record', async () => {
-  await RecordsScreen.openSeventhRecord();
-});
-
-When('I tap on the record cell', async () => {
-  await RecordsScreen.openFifteenthRecord();
+When('I open the record {string}', async (songTitle) => {
+  while(!(await RecordsScreen.isScrolledToTop())) {
+    await RecordsScreen.swipeDownOnScreen();
+  }
+  await RecordsScreen.tapRecordContainingTitleText(songTitle)
+  console.log(`Tapped on the record ${songTitle}`);
 });
 
 When('I navigate back from the record detail', async () => {
+  await RecordsScreen.navBackButton.waitForDisplayed();
   await RecordsScreen.navBackButton.tap();
 });
 
