@@ -39,9 +39,9 @@ jobs:
       XCODE_ORG_ID: ${{ secrets.XCODE_ORG_ID }}        # Apple Developer Team id
       XCODE_SIGNING_ID: ${{ secrets.XCODE_SIGNING_ID }} # optional; defaults to "Apple Development"
       WDA_BUNDLE_ID: ${{ secrets.WDA_BUNDLE_ID }}       # optional; for personal provisioning
-      # --- Sensitive: Auth secrets ------------------
-      HOTCLUB_TEST_EMAIL: ${{ secrets.HOTCLUB_TEST_EMAIL }}
-      HOTCLUB_TEST_PASSWORD: ${{ secrets.HOTCLUB_TEST_PASSWORD }}
+      # --- Sensitive: Auth credentials (Secrets, with Variables as fallback) --
+      HOTCLUB_TEST_EMAIL: ${{ secrets.HOTCLUB_TEST_EMAIL || vars.HOTCLUB_TEST_EMAIL }}
+      HOTCLUB_TEST_PASSWORD: ${{ secrets.HOTCLUB_TEST_PASSWORD || vars.HOTCLUB_TEST_PASSWORD }}
 
     steps:
       - name: Checkout
@@ -83,6 +83,17 @@ jobs:
           fi
 
           echo "Found prebuilt WebDriverAgent at: $WDA_APP"
+
+      - name: Verify auth credentials are available
+        run: |
+          if [ -z "$HOTCLUB_TEST_EMAIL" ] || [ -z "$HOTCLUB_TEST_PASSWORD" ]; then
+            echo "::error::HOTCLUB_TEST_EMAIL and/or HOTCLUB_TEST_PASSWORD are empty in this job."
+            echo "Add repository Secrets with those exact names:"
+            echo "  Settings → Secrets and variables → Actions → Secrets"
+            echo "GitHub Secrets are not used by local npm test; use a .env file for that."
+            exit 1
+          fi
+          echo "Auth credentials are set (values hidden)."
 
       - name: Run iOS E2E tests
         run: npm run wdioIosGHTestRun

@@ -1,6 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import './load-env.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Project root, one level up from this config/ folder. All project-relative

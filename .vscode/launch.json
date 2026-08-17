@@ -8,6 +8,7 @@
       "program": "${workspaceFolder}/node_modules/@wdio/cli/bin/wdio.js",
       "args": ["run", "./config/ios-wdio.conf.ts"],
       "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
       "console": "integratedTerminal",
       "autoAttachChildProcesses": true,
       "sourceMaps": true,

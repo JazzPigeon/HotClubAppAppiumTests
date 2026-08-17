@@ -1,3 +1,4 @@
+@loggedIn
 Feature: Records screen
 
   Background:
