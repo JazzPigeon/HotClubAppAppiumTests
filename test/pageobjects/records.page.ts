@@ -272,11 +272,15 @@ class RecordsScreen {
     await driver.execute('mobile: launchApp', { bundleId: info.bundleId });
   }
 
-  async waitForDisplayed(timeout = 15000): Promise<void> {
+  async waitForLoggedInShell(timeout = 15000): Promise<void> {
     await this.navBar.waitForDisplayed({ timeout });
     await this.recordsTab.waitForDisplayed({ timeout });
     await this.addTab.waitForDisplayed({ timeout });
     await this.settingsTab.waitForDisplayed({ timeout });
+  }
+
+  async waitForDisplayed(timeout = 15000): Promise<void> {
+    await this.waitForLoggedInShell(timeout);
     await driver.waitUntil(
       async () => (await this.recordCells.length) >= 5,
       { timeout, timeoutMsg: 'Expected at least five record cells' }

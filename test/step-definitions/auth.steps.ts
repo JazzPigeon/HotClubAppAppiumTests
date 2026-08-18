@@ -21,7 +21,7 @@ Then('I should see the authentication screen', async () => {
 });
 
 Then('I should see the Records screen', async () => {
-  await RecordsScreen.waitForDisplayed();
+  await RecordsScreen.waitForLoggedInShell();
 });
 
 When('I sign in with valid credentials', async () => {
