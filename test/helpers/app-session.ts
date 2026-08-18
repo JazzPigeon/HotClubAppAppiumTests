@@ -24,13 +24,23 @@ let cachedBundleId: string | undefined;
  */
 export async function ensureLoggedOut(): Promise<void> {
   const screen = await waitForAuthOrRecords(15000).catch(() => null);
+  const onRealDevice = isRealIosDevice();
+
+  console.log(
+    `[ensureLoggedOut] screen=${screen ?? 'unknown'} realDevice=${onRealDevice}`
+  );
 
   if (screen === 'auth') {
+    console.log(
+      '[ensureLoggedOut] Login already showing — relaunching only, skipping Settings sign-out'
+    );
     await relaunchHotClubApp();
-  } else if (isRealIosDevice()) {
+  } else if (onRealDevice) {
+    console.log('[ensureLoggedOut] Signing out via Settings, then relaunching');
     await signOutViaSettings();
     await relaunchHotClubApp();
   } else {
+    console.log('[ensureLoggedOut] Simulator reset: uninstall, clear keychains, relaunch');
     await resetAppAndLaunch();
   }
 
@@ -105,15 +115,21 @@ export function getTestCredentials(): { email: string; password: string } {
 
 async function signOutViaSettings(): Promise<void> {
   if (await RecordsScreen.isDisplayedNow(RecordsScreen.navBackButton, 1000)) {
+    console.log('[ensureLoggedOut] Leaving record detail before Settings');
     await RecordsScreen.navigateBackFromDetail();
   }
 
   if (!(await SettingsScreen.isDisplayedNow(1500))) {
+    console.log('[ensureLoggedOut] Opening Settings tab');
     await SettingsScreen.openFromTabBar();
+  } else {
+    console.log('[ensureLoggedOut] Already on Settings');
   }
 
+  console.log('[ensureLoggedOut] Tapping Sign out');
   await SettingsScreen.tapSignOut();
   await AuthScreen.waitForDisplayed(20000);
+  console.log('[ensureLoggedOut] Login screen visible after Sign out');
 }
 
 function isRealIosDevice(): boolean {
