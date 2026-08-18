@@ -27,7 +27,11 @@ export async function ensureLoggedOut(): Promise<void> {
   const onRealDevice = isRealIosDevice();
 
   console.log(
-    `[ensureLoggedOut] screen=${screen ?? 'unknown'} realDevice=${onRealDevice}`
+    `[ensureLoggedOut] screen=${screen ?? 'unknown'} realDevice=${onRealDevice} ` +
+      `isSimulator=${String(readCap('isSimulator'))} ` +
+      `usePrebuiltWDA=${String(readCap('usePrebuiltWDA'))} ` +
+      `udid=${String(readCap('udid') ?? '')} ` +
+      `hasXcodeOrgId=${Boolean(readCap('xcodeOrgId') || process.env.XCODE_ORG_ID)}`
   );
 
   if (screen === 'auth') {
@@ -132,14 +136,49 @@ async function signOutViaSettings(): Promise<void> {
   console.log('[ensureLoggedOut] Login screen visible after Sign out');
 }
 
-function isRealIosDevice(): boolean {
-  const caps = driver.capabilities as Record<string, unknown>;
-  const simulator = caps['appium:isSimulator'] ?? caps.isSimulator;
-  if (typeof simulator === 'boolean') {
-    return !simulator;
+function readCap(name: string): unknown {
+  const session = (driver.capabilities ?? {}) as Record<string, unknown>;
+  const requested = ((driver as { requestedCapabilities?: Record<string, unknown> })
+    .requestedCapabilities ?? {}) as Record<string, unknown>;
+  const alwaysMatch = (requested.alwaysMatch ?? {}) as Record<string, unknown>;
+
+  for (const caps of [session, requested, alwaysMatch]) {
+    if (`appium:${name}` in caps) {
+      return caps[`appium:${name}`];
+    }
+    if (name in caps) {
+      return caps[name];
+    }
   }
 
-  return caps['appium:xcodeOrgId'] != null;
+  return undefined;
+}
+
+function isRealIosDevice(): boolean {
+  const simulator = readCap('isSimulator');
+  if (simulator === true || simulator === 'true') {
+    return false;
+  }
+  if (simulator === false || simulator === 'false') {
+    return true;
+  }
+
+  // Session caps often omit isSimulator and xcodeOrgId. The real-device
+  // config always sets these; the Simulator config never does.
+  if (process.env.XCODE_ORG_ID) {
+    return true;
+  }
+  if (readCap('xcodeOrgId')) {
+    return true;
+  }
+  if (readCap('usePrebuiltWDA') === true) {
+    return true;
+  }
+  if (readCap('udid') === 'auto') {
+    return true;
+  }
+
+  return false;
 }
 
 async function resetAppAndLaunch(): Promise<void> {
