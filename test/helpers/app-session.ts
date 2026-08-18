@@ -17,21 +17,34 @@ let cachedBundleId: string | undefined;
  * If the Login screen is already showing, the app is only terminated and
  * relaunched so the scenario still starts from process start.
  *
- * Otherwise:
- * - Real device: sign out from Settings. Uninstall does not clear Keychain
- *   on hardware, so a reinstall would still restore the session.
- * - Simulator: uninstall and clear keychains, then relaunch.
+ * If a session is still present, sign out from Settings. Uninstalling the
+ * app is not used: it does not clear Keychain on a real iPhone, and
+ * `mobile: removeApp` during a session also kills WebDriverAgent on Simulator.
  */
 export async function ensureLoggedOut(): Promise<void> {
   const screen = await waitForAuthOrRecords(15000).catch(() => null);
+  const onRealDevice = isRealIosDevice();
+
+  console.log(
+    `[ensureLoggedOut] screen=${screen ?? 'unknown'} realDevice=${onRealDevice} ` +
+      `isSimulator=${String(readCap('isSimulator'))} ` +
+      `usePrebuiltWDA=${String(readCap('usePrebuiltWDA'))} ` +
+      `udid=${String(readCap('udid') ?? '')} ` +
+      `hasXcodeOrgId=${Boolean(readCap('xcodeOrgId') || process.env.XCODE_ORG_ID)}`
+  );
 
   if (screen === 'auth') {
-    await relaunchHotClubApp();
-  } else if (isRealIosDevice()) {
-    await signOutViaSettings();
+    console.log(
+      '[ensureLoggedOut] Login already showing — relaunching only, skipping Settings sign-out'
+    );
     await relaunchHotClubApp();
   } else {
-    await resetAppAndLaunch();
+    console.log('[ensureLoggedOut] Signing out via Settings, then relaunching');
+    await signOutViaSettings();
+    if (!onRealDevice) {
+      await clearSimulatorKeychains();
+    }
+    await relaunchHotClubApp();
   }
 
   await AuthScreen.waitForDisplayed();
@@ -55,11 +68,10 @@ export async function ensureLoggedIn(): Promise<void> {
     if (screen === 'auth') {
       await signInWithTestCredentials();
       await RecordsScreen.navBar.waitForDisplayed({ timeout: 20000 });
+      await relaunchHotClubApp();
+      screen = await waitForAuthOrRecords();
     }
   }
-
-  await relaunchHotClubApp();
-  screen = await waitForAuthOrRecords();
 
   if (screen === 'auth') {
     throw new Error(
@@ -105,46 +117,75 @@ export function getTestCredentials(): { email: string; password: string } {
 
 async function signOutViaSettings(): Promise<void> {
   if (await RecordsScreen.isDisplayedNow(RecordsScreen.navBackButton, 1000)) {
+    console.log('[ensureLoggedOut] Leaving record detail before Settings');
     await RecordsScreen.navigateBackFromDetail();
   }
 
   if (!(await SettingsScreen.isDisplayedNow(1500))) {
+    console.log('[ensureLoggedOut] Opening Settings tab');
     await SettingsScreen.openFromTabBar();
+  } else {
+    console.log('[ensureLoggedOut] Already on Settings');
   }
 
+  console.log('[ensureLoggedOut] Tapping Sign out');
   await SettingsScreen.tapSignOut();
   await AuthScreen.waitForDisplayed(20000);
+  console.log('[ensureLoggedOut] Login screen visible after Sign out');
+}
+
+function readCap(name: string): unknown {
+  const session = (driver.capabilities ?? {}) as Record<string, unknown>;
+  const requested = ((driver as { requestedCapabilities?: Record<string, unknown> })
+    .requestedCapabilities ?? {}) as Record<string, unknown>;
+  const alwaysMatch = (requested.alwaysMatch ?? {}) as Record<string, unknown>;
+
+  for (const caps of [session, requested, alwaysMatch]) {
+    if (`appium:${name}` in caps) {
+      return caps[`appium:${name}`];
+    }
+    if (name in caps) {
+      return caps[name];
+    }
+  }
+
+  return undefined;
 }
 
 function isRealIosDevice(): boolean {
-  const caps = driver.capabilities as Record<string, unknown>;
-  const simulator = caps['appium:isSimulator'] ?? caps.isSimulator;
-  if (typeof simulator === 'boolean') {
-    return !simulator;
+  const simulator = readCap('isSimulator');
+  if (simulator === true || simulator === 'true') {
+    return false;
+  }
+  if (simulator === false || simulator === 'false') {
+    return true;
   }
 
-  return caps['appium:xcodeOrgId'] != null;
+  // Session caps often omit isSimulator and xcodeOrgId. The real-device
+  // config always sets these; the Simulator config never does.
+  if (process.env.XCODE_ORG_ID) {
+    return true;
+  }
+  if (readCap('xcodeOrgId')) {
+    return true;
+  }
+  if (readCap('usePrebuiltWDA') === true) {
+    return true;
+  }
+  if (readCap('udid') === 'auto') {
+    return true;
+  }
+
+  return false;
 }
 
-async function resetAppAndLaunch(): Promise<void> {
-  const bundleId = await getBundleId();
-  const appPath = getAppPath();
-
-  try {
-    await driver.execute('mobile: terminateApp', { bundleId });
-  } catch {
-    // App may already be stopped.
-  }
-
+async function clearSimulatorKeychains(): Promise<void> {
   try {
     await driver.execute('mobile: clearKeychains');
+    console.log('[ensureLoggedOut] Cleared Simulator keychains');
   } catch {
-    // Real devices do not support this; uninstall below clears the app keychain.
+    // Unavailable outside Simulator.
   }
-
-  await driver.execute('mobile: removeApp', { bundleId });
-  await driver.execute('mobile: installApp', { app: appPath });
-  await driver.execute('mobile: launchApp', { bundleId });
 }
 
 async function relaunchHotClubApp(): Promise<void> {
@@ -185,7 +226,11 @@ async function getBundleId(): Promise<string> {
     const info = (await driver.execute('mobile: activeAppInfo')) as {
       bundleId?: string;
     };
-    if (info.bundleId && info.bundleId !== SPRINGBOARD_BUNDLE_ID) {
+    if (
+      info.bundleId &&
+      info.bundleId !== SPRINGBOARD_BUNDLE_ID &&
+      !info.bundleId.includes('WebDriverAgent')
+    ) {
       cachedBundleId = info.bundleId;
       return cachedBundleId;
     }
